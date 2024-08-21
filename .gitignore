@@ -1,0 +1,10 @@
+# Other project
+Pokemon-Card-Scanner-main/*
+
+# Input folder for storing tests inputs
+
+input_images/*
+
+# Output folder for storing tests results
+
+output_images/*
