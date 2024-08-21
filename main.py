@@ -78,7 +78,9 @@ for name in names:
         endY = (3 + 1) * segment_height
         segment = imgWarpColored[startY:endY, 0:largeur]
         
-        cv2.imwrite(f'{name_output_folder}\{name}_test_decoupe.jpg', segment)
+        print(card.identify_card(segment,reader))
+        
+        #cv2.imwrite(f'{name_output_folder}\{name}_test_decoupe.jpg', segment)
         
         
 cv2.waitKey(0)

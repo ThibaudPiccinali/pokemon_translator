@@ -39,5 +39,13 @@ def create_reader(language):
     return easyocr.Reader(language)
 
 def identify_card(image_cv2, reader):
-    result = reader.readtext(image_cv2,detail = 0)
-    return result
+    filtered_results = []
+    results = reader.readtext(image_cv2)
+    # On utilise les coordonnées des résultat pour déterminer qui est qui
+    for result in results:
+       
+        if result[-1] > 0.4:
+            # On filtre suivant le confident level
+            filtered_results.append(result) 
+    
+    return filtered_results
