@@ -40,12 +40,40 @@ def create_reader(language):
 
 def identify_card(image_cv2, reader):
     filtered_results = []
+    
     results = reader.readtext(image_cv2)
-    # On utilise les coordonnées des résultat pour déterminer qui est qui
+    results_confident = []
+    
     for result in results:
-       
+        hauteur, largeur, _ = image_cv2.shape
         if result[-1] > 0.4:
             # On filtre suivant le confident level
-            filtered_results.append(result) 
+            results_confident.append(result) 
+    
+    if results_confident == []:
+        return None
+    
+    # On utilise les coordonnées des résultats pour déterminer qui est qui
+    for result in results_confident:
+        coordinates = result[0]
+        good_coordinates = True
+        for coord in coordinates:
+            x, y = coord
+            if (x < 0) or (x > largeur//3):
+                good_coordinates = False
+            if (y < hauteur//3) or (y > hauteur):
+                good_coordinates = False
+        if good_coordinates:
+            filtered_results.append(result)
+    
+    if len(results_confident) < 2:
+        return None
+    
+    # Doit être les deux derniers résultats
+    filtered_results = filtered_results[-2:]
+    
+    # On extrait uniquement la chaine de caractère
+    
+    filtered_results = [filtered_results[0][1],[filtered_results[1][1].split('/')[0],filtered_results[1][1].split('/')[1][:3]]]
     
     return filtered_results

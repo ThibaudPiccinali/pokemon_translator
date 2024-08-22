@@ -71,16 +71,17 @@ for name in names:
         cv2.imshow(f'{name}_card_detected', imgWarpColored)
         cv2.imwrite(f'{name_output_folder}\{name}_card_detected.png', imgWarpColored)
 
-        # On prend uniquement le 1/4 inférieur bas de la carte pour son identification
-        segment_height = longueur // 4
+        # On prend uniquement la partie basse de la carte pour son identification
+        nb_segment = 4
+        segment_height = longueur // nb_segment
         
-        startY = 3 * segment_height
-        endY = (3 + 1) * segment_height
+        startY = (nb_segment-1) * segment_height
+        endY = nb_segment * segment_height
         segment = imgWarpColored[startY:endY, 0:largeur]
         
         print(card.identify_card(segment,reader))
         
-        #cv2.imwrite(f'{name_output_folder}\{name}_test_decoupe.jpg', segment)
+        # cv2.imwrite(f'{name_output_folder}\{name}_test_decoupe.jpg', segment)
         
         
 cv2.waitKey(0)
