@@ -83,6 +83,12 @@ for name in names:
         
         # cv2.imwrite(f'{name_output_folder}\{name}_test_decoupe.jpg', segment)
         
+        # On projette l'image de la carte correspondente
+        overlay_image = cv2.imread('card_bdd/fr/TWM/154.jpg') # Pour le moment juste cette carte disponible dans la bdd
+        
+        final_projection = utils.card_projection(corners_ordered,(largeur,longueur),image,overlay_image)
+        
+        cv2.imwrite(f'{name_output_folder}\{name}_final_projection.jpg', final_projection)
         
 cv2.waitKey(0)
 cv2.destroyAllWindows()

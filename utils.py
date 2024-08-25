@@ -71,6 +71,43 @@ def draw_rectangle_with_corners(image, corners):
     
     return image_with_card
 
+def card_projection(corners_card,size_card,base_image,card_image):
+    
+    # Calcul de la taille de la carte sur l'image
+    largeur,longueur = size_card 
+    pts1 = np.float32(corners_card)   
+    pts2 = np.float32([[0, 0], [largeur, 0], [0, longueur], [largeur, longueur]])
+
+    # On resize la taille de l'image carte (pour qu'elle correspondent à ce que l'on a)
+    card_image_resized = cv2.resize(card_image, size_card)
+    
+    matrix = cv2.getPerspectiveTransform(pts2, pts1)
+    
+    # Obtenir la taille de l'image de base
+    base_rows, base_cols, _ = base_image.shape
+
+    # Ajuster la matrice de transformation en fonction de la taille des images
+    # Ici, on suppose que la transformation est déjà prévue pour s'appliquer sur l'image overlay.
+    transformed_overlay = cv2.warpPerspective(card_image_resized, matrix, (base_cols, base_rows))
+
+    # Créer un masque à partir de l'image overlay transformée
+    mask = cv2.cvtColor(transformed_overlay, cv2.COLOR_BGR2GRAY)
+    _, mask = cv2.threshold(mask, 1, 255, cv2.THRESH_BINARY)
+
+    # Inverser le masque pour enlever la partie de l'image de base où l'image overlay sera placée
+    mask_inv = cv2.bitwise_not(mask)
+
+    # Enlever la partie correspondante de l'image de base
+    base_image_bg = cv2.bitwise_and(base_image, base_image, mask=mask_inv)
+
+    # Prendre seulement la région d'intérêt de l'image overlay
+    overlay_fg = cv2.bitwise_and(transformed_overlay, transformed_overlay, mask=mask)
+
+    # Ajouter les deux images
+    result = cv2.add(base_image_bg, overlay_fg)
+
+    return result
+
 # Swaps the values of at two indexes in the given array
 def swap(arr, ind1, ind2):
     temp = arr[ind1]
