@@ -18,8 +18,49 @@ def get_cards(set_name):
     set = get_set(set_name)
     return set['cards']
 
-def get_image_cv2(card):
-    card_image_url = f'{card["image"]}/high.webp'
+# # Useless ?
+# Non mais a adapter pour liste de cartes
+
+# def get_secret_card(set_name):
+#     set = get_set(set_name)
+#     nb_non_secretes = set['cardCount']['official']
+#     nb_total = set['cardCount']['total']
+#     nb_secretes = nb_total - nb_non_secretes
+#     return set['cards'][-(nb_secretes):]
+
+# def get_non_secret_card(set_name):
+#     set = get_set(set_name)
+#     nb_non_secretes = set['cardCount']['official']
+#     return set['cards'][:nb_non_secretes]
+
+def filter_card_HP(set_name,hp):
+    
+    url = f"{base_url}/cards?hp={hp}&id={set_name}-"
+    
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        print(f"Erreur {response.status_code}: {response.text}")
+        return None
+
+def filter_card_category(set_name,category):
+    """
+    category = Pokemon
+    category = Trainer
+    category = Energy
+    """
+    url = f"{base_url}/cards?category={category}&id={set_name}-"
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        print(f"Erreur {response.status_code}: {response.text}")
+        return None
+
+def get_image_cv2(card,quality="high",format="webp"):
+
+    card_image_url = f'{card["image"]}/{quality}.{format}'
     try:
         # Envoyer une requête GET à l'URL
         response = requests.get(card_image_url)
@@ -39,7 +80,7 @@ def get_image_cv2(card):
     except requests.RequestException as e:
         print(f"Erreur lors du téléchargement de l'image : {e}")
         return None
-    
+
 if __name__ == '__main__':
     
     image = get_image_cv2(get_cards("sv01")[-1])
