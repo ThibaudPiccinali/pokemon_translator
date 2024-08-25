@@ -1,6 +1,7 @@
 import cv2
 import easyocr
 import utils as utils
+import tcgdex_api as tcg
 
 # To find the card
 
@@ -77,3 +78,70 @@ def identify_card(image_cv2, reader):
     filtered_results = [filtered_results[0][1],[filtered_results[1][1].split('/')[0],filtered_results[1][1].split('/')[1][:3]]]
     
     return filtered_results
+
+# To compare two cards (and know if they are similars)
+
+def average_hash(image, hash_size=8):
+    """Calcule l'average hash de l'image."""
+    # Convertir l'image en niveaux de gris
+    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # Redimensionner l'image
+    resized_image = cv2.resize(gray_image, (hash_size, hash_size), interpolation=cv2.INTER_LANCZOS4)
+    # Calculer la moyenne des pixels
+    avg = resized_image.mean()
+    # Générer le hash : chaque bit est 1 si le pixel est supérieur à la moyenne, 0 sinon
+    hash_array = resized_image > avg
+    # Convertir le tableau en hash (sous forme de chaîne de caractères)
+    hash_str = ''.join(hash_array.flatten().astype(int).astype(str))
+    return hash_str
+
+def hamming_distance(hash1, hash2):
+    """Calcule la distance de Hamming entre deux hashes."""
+    if len(hash1) != len(hash2):
+        raise ValueError("Les hashes doivent avoir la même longueur")
+    return sum(c1 != c2 for c1, c2 in zip(hash1, hash2))
+
+def calculate_similarity(image1_cv2, image2_cv2):
+    """Calcule la similarité entre deux images en utilisant les average hashes."""
+    # Pour l'instant n'est pas tres convaincant
+    
+    # Calculer les average hashes
+    hash1 = average_hash(image1_cv2)
+    hash2 = average_hash(image2_cv2)
+    
+    # Calculer la distance de Hamming entre les deux hashes
+    distance = hamming_distance(hash1, hash2)
+    
+    # Calculer la similarité en pourcentage
+    similarity = 1 - (distance / len(hash1))
+    return similarity
+
+import time
+
+if __name__ == '__main__':
+    
+    start_time = time.perf_counter()
+    
+    card_detected = cv2.imread("output_images/IMG_20240821_160259.jpg_card_detected.png")
+    best_similarity = 0
+    best_card_match = None
+    
+    cards = tcg.get_cards("sv06")
+    for card in cards:
+        card_image_bdd = tcg.get_image_cv2(card)
+        similarity = calculate_similarity(card_detected,card_image_bdd)
+        
+        if similarity> best_similarity:
+            best_card_match = card_image_bdd
+            best_similarity = similarity
+            
+    end_time = time.perf_counter()
+
+    execution_time = end_time - start_time
+    print(f"Temps d'exécution: {execution_time:.4f} secondes")
+    
+    if best_card_match is not None:
+        # Afficher l'image en utilisant OpenCV (optionnel)
+        cv2.imshow('best_card_match', best_card_match)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
