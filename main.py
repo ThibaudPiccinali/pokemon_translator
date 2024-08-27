@@ -1,6 +1,6 @@
 import os
 import cv2
-import card_identifier as card
+import card_reader as card
 import utils as utils
 import numpy as np
 
@@ -30,7 +30,7 @@ for name in names:
     # Redimensionner l'image
     image_resized = cv2.resize(image, (900, 1200), interpolation = cv2.INTER_AREA)
         
-    corners = card.find_good_contours(image_resized)
+    corners = utils.find_good_contours(image_resized)
 
     if len(corners) == 0:
         cv2.imshow(f'{name_output_folder}\{name}_no_card_found', image_resized)
@@ -70,18 +70,11 @@ for name in names:
         imgWarpColored = cv2.warpPerspective(image,  matrix, (largeur, longueur))
         cv2.imshow(f'{name}_card_detected', imgWarpColored)
         cv2.imwrite(f'{name_output_folder}\{name}_card_detected.png', imgWarpColored)
-
-        # On prend uniquement la partie basse de la carte pour son identification
-        nb_segment = 4
-        segment_height = longueur // nb_segment
+                
+        set_name, number_card = card.identify_card_set_and_nb(imgWarpColored,reader)
+        hp = card.identify_card_hp(imgWarpColored,reader)
         
-        startY = (nb_segment-1) * segment_height
-        endY = nb_segment * segment_height
-        segment = imgWarpColored[startY:endY, 0:largeur]
-        
-        print(card.identify_card(segment,reader))
-        
-        # cv2.imwrite(f'{name_output_folder}\{name}_test_decoupe.jpg', segment)
+        print(set_name,number_card,hp)
         
         # On projette l'image de la carte correspondente
         overlay_image = cv2.imread('card_bdd/fr/TWM/154.jpg') # Pour le moment juste cette carte disponible dans la bdd

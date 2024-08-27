@@ -191,3 +191,114 @@ def reorderCorners(corners):
             bottomleft = [xvals[idxsDist[2]], yvals[idxsDist[2]]]
 
     return [[topleft], [topright], [bottomleft], [bottomright]]
+
+# To find the card
+
+def find_good_contours(image_cv2):
+    
+    # gray = cv2.cvtColor(image_cv2, cv2.COLOR_BGR2GRAY)
+
+    # Appliquer un flou pour réduire le bruit
+    blurred = cv2.GaussianBlur(image_cv2, (1, 1), 0)
+
+    # Détecter les bords avec Canny
+    edges = cv2.Canny(blurred, 50, 200)
+
+    # Trouver les contours dans l'image
+    contours, _  = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    # Dessiner les contours et détecter les coins
+    for contour in contours:
+        
+        # Approximer les contours en un polygone
+        epsilon = 0.02 * cv2.arcLength(contour, True)
+        corners = cv2.approxPolyDP(contour, epsilon, True)
+        
+        # Si le polygone a 4 côtés, ça peut être un paralelogramme
+        if len(corners) == 4:
+            # On teste si c'est un paralelogramme
+            if(is_paralelogramme([corners[0][0],corners[1][0],corners[2][0],corners[3][0]])):
+                # On considère que il ne peut y avoir qu'une carte par image donc la première qu'on trouve doit petre la bonne
+                return corners
+    
+    return []
+
+# To compare two cards (and know if they are similars)
+
+# def average_hash(image, hash_size=8):
+#     """Calcule l'average hash de l'image."""
+#     # Convertir l'image en niveaux de gris
+#     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+#     # Redimensionner l'image
+#     resized_image = cv2.resize(gray_image, (hash_size, hash_size), interpolation=cv2.INTER_LANCZOS4)
+#     # Calculer la moyenne des pixels
+#     avg = resized_image.mean()
+#     # Générer le hash : chaque bit est 1 si le pixel est supérieur à la moyenne, 0 sinon
+#     hash_array = resized_image > avg
+#     # Convertir le tableau en hash (sous forme de chaîne de caractères)
+#     hash_str = ''.join(hash_array.flatten().astype(int).astype(str))
+#     return hash_str
+
+# def hamming_distance(hash1, hash2):
+#     """Calcule la distance de Hamming entre deux hashes."""
+#     if len(hash1) != len(hash2):
+#         raise ValueError("Les hashes doivent avoir la même longueur")
+#     return sum(c1 != c2 for c1, c2 in zip(hash1, hash2))
+
+# def calculate_similarity(image1_cv2, image2_cv2):
+#     """Calcule la similarité entre deux images en utilisant les average hashes."""
+#     # Pour l'instant n'est pas tres convaincant
+    
+#     # Calculer les average hashes
+#     hash1 = average_hash(image1_cv2)
+#     hash2 = average_hash(image2_cv2)
+    
+#     # Calculer la distance de Hamming entre les deux hashes
+#     distance = hamming_distance(hash1, hash2)
+    
+#     # Calculer la similarité en pourcentage
+#     similarity = 1 - (distance / len(hash1))
+#     return similarity
+
+def load_image(image_path):
+    """Charge l'image depuis le chemin spécifié."""
+    return cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+
+def detect_and_compute_keypoints(image):
+    """Détecte les keypoints et calcule les descripteurs avec SIFT."""
+    sift = cv2.SIFT_create()
+    keypoints, descriptors = sift.detectAndCompute(image, None)
+    return keypoints, descriptors
+
+def match_keypoints(descriptors1, descriptors2):
+    """Effectue le matching entre les descripteurs des deux images."""
+    # Utilisation de FLANN pour matcher les descripteurs
+    FLANN_INDEX_KDTREE = 1
+    index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
+    search_params = dict(checks = 50)
+    flann = cv2.FlannBasedMatcher(index_params, search_params)
+    
+    matches = flann.knnMatch(descriptors1, descriptors2, k=2)
+    
+    # Retenir les bons matches selon la méthode du ratio test de Lowe
+    good_matches = []
+    for m, n in matches:
+        if m.distance < 0.7 * n.distance:
+            good_matches.append(m)
+    
+    return good_matches
+
+def calculate_similarity(image1, image2):
+    """Calcule la similarité entre deux images en utilisant les keypoints."""
+    # Charger les images
+
+    # Détecter les keypoints et les descripteurs
+    kp1, des1 = detect_and_compute_keypoints(image1)
+    kp2, des2 = detect_and_compute_keypoints(image2)
+
+    # Matcher les descripteurs
+    good_matches = match_keypoints(des1, des2)
+    
+    # Calculer une métrique de similarité basée sur les bons matches
+    similarity = len(good_matches) / min(len(kp1), len(kp2))
+    return similarity
