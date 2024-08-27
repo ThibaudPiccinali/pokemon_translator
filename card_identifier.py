@@ -165,15 +165,20 @@ if __name__ == '__main__':
     
     start_time = time.time()
     
-    # card_detected = cv2.imread("output_images/IMG_20240821_160259.jpg_card_detected.png")
-    card_detected = cv2.imread("output_images/test.jpg_card_detected.png")
+    card_detected = cv2.imread("output_images/IMG_20240821_160259.jpg_card_detected.png")
+    # card_detected = cv2.imread("output_images/test.jpg_card_detected.png")
     best_similarity = 0
     best_card_match = None
     
-    # card_filtered = tcg.filter_card_HP("sv06",60)
-    card_filtered = tcg.filter_card_category("sv06","Trainer")
+    set_name = "sv06"
+    set_info = tcg.get_set(set_name)
     
-    for card in card_filtered:
+    cards_filtered = tcg.filter_card_HP("sv06",60)
+    # cards_filtered = tcg.filter_card_category(set_name,"Trainer")
+    
+    cards_filtered = tcg.get_non_secret_card(set_info,cards_filtered)
+    
+    for card in cards_filtered:
         card_image_bdd = tcg.get_image_cv2(card)
         similarity = calculate_similarity(card_detected,card_image_bdd)
         

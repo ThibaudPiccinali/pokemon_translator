@@ -18,20 +18,23 @@ def get_cards(set_name):
     set = get_set(set_name)
     return set['cards']
 
-# # Useless ?
-# Non mais a adapter pour liste de cartes
+def get_secret_card(set, cards):
+    nb_non_secretes = set['cardCount']['official']
+    secret_card = []
+    for card in cards:
+        if int(card["localId"]) > int(nb_non_secretes):
+            secret_card.append(card)
+    
+    return secret_card
 
-# def get_secret_card(set_name):
-#     set = get_set(set_name)
-#     nb_non_secretes = set['cardCount']['official']
-#     nb_total = set['cardCount']['total']
-#     nb_secretes = nb_total - nb_non_secretes
-#     return set['cards'][-(nb_secretes):]
-
-# def get_non_secret_card(set_name):
-#     set = get_set(set_name)
-#     nb_non_secretes = set['cardCount']['official']
-#     return set['cards'][:nb_non_secretes]
+def get_non_secret_card(set_info, cards):
+    nb_non_secretes = set_info['cardCount']['official']
+    non_secret_card = []
+    for card in cards:
+        if int(card["localId"]) <= int(nb_non_secretes):
+            non_secret_card.append(card)
+    
+    return non_secret_card
 
 def filter_card_HP(set_name,hp):
     
