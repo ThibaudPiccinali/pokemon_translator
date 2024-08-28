@@ -302,3 +302,18 @@ def calculate_similarity(image1, image2):
     # Calculer une métrique de similarité basée sur les bons matches
     similarity = len(good_matches) / min(len(kp1), len(kp2))
     return similarity
+
+def lire_table_fichier(nom_fichier):
+    table = {}
+    with open(nom_fichier, 'r') as fichier:
+        lignes = fichier.readlines()
+        for ligne in lignes:
+            elements = ligne.split()
+            if len(elements) == 2:
+                table[elements[0]] = elements[1]
+            else:
+                print(f"Ligne ignorée car elle ne contient pas exactement deux éléments : {ligne}")
+    return table
+
+def obtenir_valeur(table, cle):
+    return table.get(cle, None)

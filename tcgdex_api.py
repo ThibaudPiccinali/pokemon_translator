@@ -18,8 +18,8 @@ def get_cards(set_name):
     set = get_set(set_name)
     return set['cards']
 
-def get_secret_card(set, cards):
-    nb_non_secretes = set['cardCount']['official']
+def get_secret_card(set_info, cards):
+    nb_non_secretes = set_info['cardCount']['official']
     secret_card = []
     for card in cards:
         if int(card["localId"]) > int(nb_non_secretes):
@@ -52,14 +52,25 @@ def filter_card_category(set_name,category):
     category = Pokemon
     category = Trainer
     category = Energy
+    categroy = Non Pokemon
     """
-    url = f"{base_url}/cards?category={category}&id={set_name}-"
-    response = requests.get(url)
-    if response.status_code == 200:
-        return response.json()
+    
+    if category != "Non Pokemon":
+        url = f"{base_url}/cards?category={category}&id={set_name}-"
+        response = requests.get(url)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            print(f"Erreur {response.status_code}: {response.text}")
+            return None
     else:
-        print(f"Erreur {response.status_code}: {response.text}")
-        return None
+        url = f"{base_url}/cards?category=Trainer&category=Energy&id={set_name}-"
+        response = requests.get(url)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            print(f"Erreur {response.status_code}: {response.text}")
+            return None
 
 def get_image_cv2(card,quality="high",format="webp"):
 
