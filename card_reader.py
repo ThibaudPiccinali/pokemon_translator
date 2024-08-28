@@ -13,18 +13,18 @@ def identify_card_hp(image_cv2,reader):
     # On prend la partie haute de la carte pour récupérer les PV
     
     longueur,largeur, _ = image_cv2.shape
-    nb_segment = 6
+    nb_segment = 3
     segment_height = longueur // nb_segment
         
     startY = 0
     endY = segment_height
-    top_card = image_cv2[startY:endY, 0:largeur]
-
+    top_card = image_cv2[startY:endY, largeur//2:largeur]
+    
     filtered_results = []
     
     results = reader.readtext(top_card)
     results_confident = []
-    
+
     for result in results:
         _, largeur, _ = top_card.shape
         if result[-1] > 0.4:
@@ -71,21 +71,21 @@ def identify_card_set_and_nb(image_cv2, reader):
     startY = (nb_segment-1) * segment_height
     endY = nb_segment * segment_height
     bottom_card = image_cv2[startY:endY, 0:largeur]
-    
+        
     filtered_results = []
     
     results = reader.readtext(bottom_card)
     results_confident = []
-    
+        
     for result in results:
         hauteur, largeur, _ = bottom_card.shape
-        if result[-1] > 0.4:
+        if result[-1] > 0.3:
             # On filtre suivant le confident level
             results_confident.append(result) 
     
     if results_confident == []:
         return None,None
-    
+        
     # On utilise les coordonnées des résultats pour déterminer qui est qui
     for result in results_confident:
         coordinates = result[0]
@@ -98,16 +98,19 @@ def identify_card_set_and_nb(image_cv2, reader):
                 good_coordinates = False
         if good_coordinates:
             filtered_results.append(result)
-    
+        
     if len(filtered_results) < 2:
         return None,None
     
     # Doit être les deux derniers résultats
     filtered_results = filtered_results[-2:]
-    
+
     # On extrait uniquement la chaine de caractère
     
-    filtered_results = [filtered_results[0][1],[filtered_results[1][1].split('/')[0],filtered_results[1][1].split('/')[1][:3]]]
+    if '/' in filtered_results[1][1]:
+        filtered_results = [filtered_results[0][1].lower(),[filtered_results[1][1].split('/')[0],filtered_results[1][1].split('/')[1][:3]]]
+    else:
+        filtered_results = [filtered_results[0][1].lower(),None]
     
     return filtered_results
 

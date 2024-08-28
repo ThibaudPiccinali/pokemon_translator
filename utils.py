@@ -196,16 +196,25 @@ def reorderCorners(corners):
 
 def find_good_contours(image_cv2):
     
-    # gray = cv2.cvtColor(image_cv2, cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(image_cv2, cv2.COLOR_BGR2GRAY)
 
-    # Appliquer un flou pour réduire le bruit
-    blurred = cv2.GaussianBlur(image_cv2, (1, 1), 0)
+    # # Appliquer un flou pour réduire le bruit
+    # blurred = cv2.GaussianBlur(gray, (11, 11), 0)
 
-    # Détecter les bords avec Canny
-    edges = cv2.Canny(blurred, 50, 200)
+    # # Détecter les bords avec Canny
+    # edges = cv2.Canny(blurred, 50, 100)
+
+    # Appliquer un flou médian pour réduire le bruit tout en préservant les bords
+    blurred = cv2.medianBlur(gray, 5)
+
+    # Appliquer un seuillage adaptatif
+    edges = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
 
     # Trouver les contours dans l'image
     contours, _  = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    # test = cv2.drawContours(image_cv2, contours, -1, (0, 255, 0), 3)
+    # cv2.imshow(f'test_contours', test)
 
     # Dessiner les contours et détecter les coins
     for contour in contours:
@@ -216,11 +225,13 @@ def find_good_contours(image_cv2):
         
         # Si le polygone a 4 côtés, ça peut être un paralelogramme
         if len(corners) == 4:
+            test = draw_rectangle_with_corners(image_cv2,corners) 
+            cv2.imshow(f'test_corners', test)
+            cv2.waitKey(0)
             # On teste si c'est un paralelogramme
             if(is_paralelogramme([corners[0][0],corners[1][0],corners[2][0],corners[3][0]])):
                 # On considère que il ne peut y avoir qu'une carte par image donc la première qu'on trouve doit petre la bonne
                 return corners
-    
     return []
 
 # To compare two cards (and know if they are similars)
